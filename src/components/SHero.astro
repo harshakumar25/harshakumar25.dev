@@ -374,8 +374,9 @@ import ASeparator from './ASeparator.astro'
     opacity: 0;
     overflow: hidden;
 
+    // Fit the name and tagline in the first screen under the stacked header
     @include mq(phone) {
-      min-height: calc(105svh - 4.5rem);
+      min-height: calc(100svh - 8rem);
     }
 
     .s__waves {
