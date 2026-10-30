@@ -555,6 +555,13 @@ const navLinks = [
         flex-direction: row;
         align-items: stretch;
 
+        // Telemetry and CTA are hidden here, so pin the buttons to the right edge
+        @include mq(tablet-sm) {
+          margin-left: auto;
+          border-left: 1px solid color(secondary);
+          border-right: 0;
+        }
+
         .sh-action-btn {
           display: flex;
           align-items: center;
@@ -684,9 +691,25 @@ const navLinks = [
       flex: 1;
 
       @include mq(phone) {
-        gap: 0.75rem;
-        padding: 0.4rem 0.5rem;
+        justify-content: space-between;
+        gap: 0.25rem;
+        padding: 0.45rem 0.65rem;
         overflow-x: auto;
+        scrollbar-width: none;
+
+        &::-webkit-scrollbar {
+          display: none;
+        }
+
+        .sh-nav-link {
+          padding: 0.3rem 0.35rem;
+          font-size: 11px;
+          letter-spacing: 0.08em;
+
+          &.is-pill {
+            padding: 0.3rem 0.6rem;
+          }
+        }
       }
 
       .sh-nav-sep {

@@ -1654,6 +1654,10 @@ const works = projects
       position: relative;
       height: var(--height);
       clip-path: inset(0 -1rem);
+      // clip-path is visual only: the off-screen work cards still widen the
+      // page on phones. overflow-x: clip removes that without breaking sticky.
+      overflow-x: clip;
+      overflow-clip-margin: 1rem;
     }
 
     .s__inner {
@@ -1734,10 +1738,17 @@ const works = projects
         padding: 0.45rem 0.85rem;
         font-size: 8px;
         max-width: 92vw;
+        justify-content: flex-start; // centred overflow would clip "01" out of reach
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
         &::-webkit-scrollbar { display: none; }
+      }
+
+      @include mq(phone) {
+        gap: 0.4rem;
+        padding: 0.45rem 0.75rem;
+        letter-spacing: 0.06em;
       }
 
       .s__cat-item {
