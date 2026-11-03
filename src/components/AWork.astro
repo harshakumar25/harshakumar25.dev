@@ -13,13 +13,14 @@ const accent = (project && project.accent) || '#39e75f'
   class={cssClass}
   data-kind={resolvedKind}
   data-is-image={resolvedKind === 'image' ? 'true' : 'false'}
+  data-highlighted={project?.highlighted ? 'true' : 'false'}
   style={`--accent:${accent}`}>
   <div class="a__inner js-inner">
     <a href={site} target="_blank" rel="noopener noreferrer" class="a__link js-link">
       <div class="a__media-wrap js-media-wrap">
         {
           resolvedKind === 'image' && mediaSrc && (
-            <div class="a__img-viewport js-viewport">
+            <div class={`a__img-viewport js-viewport ${project?.highlighted ? 'a__img-viewport--highlighted' : ''}`}>
               <img
                 src={mediaSrc}
                 alt={caption}
@@ -27,7 +28,78 @@ const accent = (project && project.accent) || '#39e75f'
                 loading="lazy"
                 draggable="false"
               />
-              <span class="a__img-tag">{project?.tag}</span>
+
+              {/* Viewport Top Bar */}
+              <div class="a__view-topbar">
+                <div class="a__view-top-left">
+                  <span class="a__img-tag">{project?.tag}</span>
+                  {project?.status && (
+                    <span class="a__status-pill">
+                      <span class="a__status-dot"></span>
+                      <span>{project.status}</span>
+                    </span>
+                  )}
+                </div>
+
+                {project?.site && (
+                  <span
+                    class="a__repo-link-chip"
+                    title={`View repository on GitHub`}
+                  >
+                    <svg class="a__gh-icon" viewBox="0 0 24 24" width="11" height="11" fill="currentColor">
+                      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                    </svg>
+                    <span>{project.repoName || 'GITHUB REPO'} ↗</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Gallery Switcher for Multi-Shot Projects (e.g. Veriqo) */}
+              {project?.gallery && project.gallery.length > 1 && (
+                <div class="a__gallery-bar js-gallery-bar">
+                  {project.gallery.map((g: any, gIdx: number) => (
+                    <button
+                      type="button"
+                      class={`a__gallery-btn js-gallery-btn ${gIdx === 0 ? 'is-active' : ''}`}
+                      data-src={g.src}
+                    >
+                      <span class="a__gallery-btn-dot"></span>
+                      <span>{g.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Deep Architecture HUD Overlay */}
+              {project?.highlighted && (
+                <div class="a__deep-scrim">
+                  <div class="a__deep-content">
+                    <div class="a__deep-meta">
+                      <h3 class="a__deep-title">{project.title}</h3>
+                      <p class="a__deep-lead">{project.lead}</p>
+                    </div>
+
+                    {project?.badges && (
+                      <div class="a__deep-badges">
+                        {project.badges.map((b: string) => (
+                          <span class="a__deep-badge">› {b}</span>
+                        ))}
+                      </div>
+                    )}
+
+                    {project?.specs && (
+                      <div class="a__deep-specs">
+                        {project.specs.map((s: any) => (
+                          <div class="a__deep-spec">
+                            <span class="a__deep-spec-k">{s.k}</span>
+                            <span class="a__deep-spec-v">{s.v}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )
         }
@@ -202,6 +274,22 @@ const accent = (project && project.accent) || '#39e75f'
         this.link.addEventListener('click', this.onClick.bind(this))
       }
 
+      // Bind Gallery Switcher Buttons (e.g. Veriqo Multi-View)
+      const galleryBtns = this.querySelectorAll('.js-gallery-btn')
+      galleryBtns.forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          galleryBtns.forEach((b) => b.classList.remove('is-active'))
+          btn.classList.add('is-active')
+          const src = btn.getAttribute('data-src')
+          const img = this.querySelector('.js-img') as HTMLImageElement
+          if (img && src) {
+            img.src = src
+          }
+        })
+      })
+
       this.onMouseEnter = this.onMouseEnter.bind(this)
       this.onMouseMove = this.onMouseMove.bind(this)
       this.onMouseLeave = this.onMouseLeave.bind(this)
@@ -321,9 +409,16 @@ const accent = (project && project.accent) || '#39e75f'
       }
 
       if (this.media && this.isImage) {
-        const posY = (this.currentNormY * 100).toFixed(1)
-        const posX = (48 + this.currentNormX * 4).toFixed(1)
-        ;(this.media as HTMLImageElement).style.objectPosition = `${posX}% ${posY}%`
+        const isHighlighted = this.getAttribute('data-highlighted') === 'true'
+        if (isHighlighted) {
+          const posY = (this.currentNormY * 18).toFixed(1)
+          const posX = (49 + this.currentNormX * 2).toFixed(1)
+          ;(this.media as HTMLImageElement).style.objectPosition = `${posX}% ${posY}%`
+        } else {
+          const posY = (this.currentNormY * 100).toFixed(1)
+          const posX = (48 + this.currentNormX * 4).toFixed(1)
+          ;(this.media as HTMLImageElement).style.objectPosition = `${posX}% ${posY}%`
+        }
       }
 
       const isSettled =
@@ -441,18 +536,276 @@ const accent = (project && project.accent) || '#39e75f'
     }
 
     .a__img-tag {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      padding: 5px 9px;
-      background: rgba(0, 0, 0, 0.72);
+      position: static;
+      display: inline-block;
+      padding: 4px 8px;
+      background: rgba(0, 0, 0, 0.78);
       border: 1px solid var(--accent, rgba(255,255,255,0.35));
       color: var(--accent, #fff);
-      font: 700 9px / 1 'PP Fraktion Mono', monospace;
-      letter-spacing: 0.14em;
+      font: 700 8.5px / 1 'PP Fraktion Mono', monospace;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(8px);
       box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 30%, transparent);
+      border-radius: 2px;
+      pointer-events: auto;
+    }
+
+    /* ─── Topbar inside Image Viewport ─── */
+    .a__view-topbar {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .a__view-top-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .a__status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 7px;
+      background: rgba(5, 7, 10, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 2px;
+      font: 700 8px / 1 'PP Fraktion Mono', monospace;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent, #fff);
+      backdrop-filter: blur(6px);
+      pointer-events: auto;
+    }
+
+    .a__status-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent, #39e75f);
+      box-shadow: 0 0 6px var(--accent, #39e75f);
+      animation: a-pulse 1.6s infinite ease-in-out;
+    }
+
+    .a__repo-link-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 8px;
+      background: rgba(10, 14, 20, 0.88);
+      border: 1px solid var(--accent, rgba(255, 255, 255, 0.35));
+      border-radius: 2px;
+      color: #ffffff;
+      font: 700 8.5px / 1 'PP Fraktion Mono', monospace;
+      letter-spacing: 0.1em;
+      text-decoration: none;
+      backdrop-filter: blur(8px);
+      transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+      pointer-events: auto;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+
+      .a__gh-icon {
+        flex-shrink: 0;
+      }
+
+      &:hover {
+        background: var(--accent, #39e75f);
+        color: #06080c;
+        border-color: var(--accent, #39e75f);
+        transform: translateY(-1px);
+      }
+    }
+
+    /* ─── Gallery Tab Switcher ─── */
+    .a__gallery-bar {
+      position: absolute;
+      top: 42px;
+      left: 10px;
+      display: inline-flex;
+      gap: 4px;
+      z-index: 10;
+      pointer-events: auto;
+
+      @include mq(phone) {
+        top: 38px;
+        gap: 3px;
+      }
+    }
+
+    .a__gallery-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 7px;
+      background: rgba(8, 10, 14, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+      color: #cbd5e1;
+      font: 700 7.5px / 1 'PP Fraktion Mono', monospace;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      transition: all 0.2s ease;
+
+      .a__gallery-btn-dot {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.4);
+      }
+
+      &.is-active,
+      &:hover {
+        border-color: var(--accent, #ff782d);
+        color: #ffffff;
+        background: rgba(12, 16, 24, 0.95);
+
+        .a__gallery-btn-dot {
+          background: var(--accent, #ff782d);
+          box-shadow: 0 0 6px var(--accent, #ff782d);
+        }
+      }
+    }
+
+    /* ─── Deep Architectural HUD Overlay ─── */
+    .a__img-viewport--highlighted {
+      height: 33vw;
+      max-height: 56vh;
+
+      @include mq(phone) {
+        height: 58vw;
+        max-height: 84vh;
+      }
+    }
+
+    .a__deep-scrim {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(180deg, transparent 0%, rgba(6, 8, 12, 0.8) 18%, rgba(6, 8, 12, 0.96) 100%);
+      padding: 0.9rem 1.1rem 0.8rem;
+      backdrop-filter: blur(8px);
+      border-top: 1px solid rgba(255, 255, 255, 0.09);
+      z-index: 8;
+      pointer-events: auto;
+      transition: background 0.3s ease, border-color 0.3s ease;
+
+      @include mq(phone) {
+        padding: 0.6rem 0.75rem;
+      }
+    }
+
+    .a__deep-content {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .a__deep-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .a__deep-title {
+      margin: 0;
+      font: 700 1.05rem / 1.2 'PP Fraktion Mono', monospace;
+      color: #ffffff;
+      letter-spacing: 0.01em;
+
+      @include mq(phone) {
+        font-size: 0.9rem;
+      }
+    }
+
+    .a__deep-lead {
+      margin: 0;
+      font: 400 9px / 1.45 'PP Fraktion Mono', monospace;
+      color: #cbd5e1;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+
+      @include mq(phone) {
+        font-size: 8px;
+        -webkit-line-clamp: 2;
+      }
+    }
+
+    .a__deep-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 2px;
+    }
+
+    .a__deep-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid color-mix(in srgb, var(--accent) 35%, rgba(255, 255, 255, 0.12));
+      border-radius: 2px;
+      font: 700 8px / 1 'PP Fraktion Mono', monospace;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent, #39e75f);
+
+      @include mq(phone) {
+        font-size: 7.5px;
+        padding: 2px 4px;
+      }
+    }
+
+    .a__deep-specs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      padding-top: 5px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.1);
+
+      @include mq(phone) {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4px;
+        padding-top: 4px;
+      }
+    }
+
+    .a__deep-spec {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 3px 5px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 2px;
+    }
+
+    .a__deep-spec-k {
+      font: 400 7px / 1 'PP Fraktion Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #94a3b8;
+    }
+
+    .a__deep-spec-v {
+      font: 700 8px / 1.15 'PP Fraktion Mono', monospace;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     /* ─── Placeholder for ASRO (no image) ─── */
