@@ -40,7 +40,7 @@ The site will be available at `http://localhost:4321`.
 
 **Harsh Kumar**
 - GitHub: [@harshakumar25](https://github.com/harshakumar25)
-- Email: [jhah1225@gmail.com](mailto:jhah1225@gmail.com)
+- Email: [Harshakumar25.office@gmail.com](mailto:harshakumar25.office@gmail.com)
 - TryHackMe: Top 4% Verified Security Credentials
 - Konflux CI / Kubernetes / Kyverno Open Source Contributor
 
